@@ -20,6 +20,12 @@ struct Monstros {
   int velocidade;
 };
 
+enum Defesa{
+    DEFESA_CONTRA = 1,
+    BASICA_DEFESA,
+    BLOQUEIO
+};
+
 int menu_ataques(){
     int opcao_ataque = 0;
     printf("\n----------------------------\n");
@@ -35,21 +41,20 @@ int menu_ataques(){
 }
 
 
+void combate_monstro(struct Jogador jog[], int tipo_jogador, int *dano_jog) {
+    
+    
 
-void combate_monstro(struct Monstros mons[], struct Jogador jog[], int tipo_monstro, int tipo_jogador) {
-    int dano = 0;
-    dano = mons[tipo_monstro].ataque - (jog[tipo_jogador - 1].defesa / 2);
-
-    if (dano < 0){
-        dano = 20;
+    if (dano_jog < 0){
+        *dano_jog = 20;
     }
 
     printf("\n-----------------------------\n");
     printf("\n|    VOCÊ PERDEU NO DADO    |\n");
-    printf("\n|    E RECEBEU %d DE DANO   |\n", dano);
+    printf("\n|    E RECEBEU %d DE DANO   |\n", *dano_jog);
     printf("\n-----------------------------\n");
 
-    jog[tipo_jogador - 1].vida -= dano;
+    jog[tipo_jogador - 1].vida -= *dano_jog;
 }
 
 void combate_jogador(struct Monstros mons[], int tipo_monstro, int *dano) {
@@ -71,54 +76,98 @@ void combate_jogador(struct Monstros mons[], int tipo_monstro, int *dano) {
 void tipos_ataques(struct Monstros mons[], struct Jogador jog[], int tipo_jogador, int tipo_monstro){
     int ataques = 0, dano_mons = 0;
 
-    ataques = menu_ataques();
-
-    if (ataques == 1){
-        dano_mons = jog[tipo_jogador - 1].forca - (mons[tipo_monstro].defesa / 2);
-        combate_jogador(mons, tipo_monstro, &dano_mons);
-    }
-
-    else if (ataques == 2){
-        jog[tipo_jogador - 1].vida += 20;
-        dano_mons = jog[tipo_jogador - 1].forca / 2;
-        combate_jogador(mons, tipo_monstro, &dano_mons);
-    }
-
-    else if (ataques == 3){
-        int aposta_num = 0, apostador = 0;
-
-        aposta_num = random() %10 + 0;
-
-        printf("\n--------------------\n");
-        printf("\n| ACERTE O NÚMERO  |\n");
-        printf("\n--------------------\n");
-        printf("\nDIGITE O NÚMERO: ");
-        scanf("%d", &apostador);
-
-        if (apostador == aposta_num){
-            printf("\n------------------\n");
-            printf("\n|  NÚMERO CERTO  |\n");
-            printf("\n------------------\n");
-
-            dano_mons = jog[tipo_jogador - 1].forca;
-            dano_mons *= 1.5;
-
+    // fazer um do...while para checar se o número digitado foi o certo, se não for retorna para o início;
+    do{
+        ataques = menu_ataques();
+        
+        if (ataques == 1){
+            dano_mons = jog[tipo_jogador - 1].forca - (mons[tipo_monstro].defesa / 2);
             combate_jogador(mons, tipo_monstro, &dano_mons);
         }
-        else {
-            printf("\n-----------------------\n");
-            printf("\n|    NÚMERO ERRADO    |\n");
-            printf("\n-----------------------\n");
 
+        else if (ataques == 2){
+            jog[tipo_jogador - 1].vida += 20;
+            dano_mons = jog[tipo_jogador - 1].forca / 2;
             combate_jogador(mons, tipo_monstro, &dano_mons);
         }
-    }
 
-    else if (ataques == 4){
-        dano_mons = jog[tipo_jogador - 1].forca * 0.6;
-        combate_jogador(mons, tipo_monstro, &dano_mons);
-    }
+        else if (ataques == 3){
+            int aposta_num = 0, apostador = 0;
 
+            aposta_num = random() %10 + 0;
+
+            do{
+                printf("\n--------------------\n");
+                printf("\n| ACERTE O NÚMERO  |\n");
+                printf("\n| ENTRE 1 E 10     |\n");
+                printf("\n--------------------\n");
+                printf("\nDIGITE O NÚMERO: ");
+                scanf("%d", &apostador);
+
+                if (apostador < 1 || apostador > 10){
+                    printf("\n----------------------\n");
+                    printf("\n|   NÚMERO INVÁLIDO  |\n");
+                    printf("\n----------------------\n");
+                }
+            }while(apostador < 1 || apostador > 10);
+
+            if (apostador == aposta_num){
+                printf("\n------------------\n");
+                printf("\n|  NÚMERO CERTO  |\n");
+                printf("\n------------------\n");
+
+                dano_mons = jog[tipo_jogador - 1].forca;
+                dano_mons *= 1.5;
+
+                combate_jogador(mons, tipo_monstro, &dano_mons);
+            }
+            else {
+                printf("\n-----------------------\n");
+                printf("\n|    NÚMERO ERRADO    |\n");
+                printf("\n-----------------------\n");
+
+                combate_jogador(mons, tipo_monstro, &dano_mons);
+            }
+        }
+
+        else if (ataques == 4){
+            dano_mons = jog[tipo_jogador - 1].forca * 0.6;
+            combate_jogador(mons, tipo_monstro, &dano_mons);
+        }
+
+        if (ataques < 1 || ataques > 4){
+            printf("\nOPÇÃO INVÁLIDA\n");
+            printf("\nREPITA O PROCESSO\n");
+        }
+    }while(ataques < 1 || ataques > 4);
+}
+
+void tipos_defesa(struct Monstros m[], struct Jogador jogador[], int monstro, int tipo_jogador){
+    enum Defesa *protecao;
+    int dano_jogador = 0;
+    
+    do{
+        printf("\n--------------------------------\n");
+        printf("\n| 1 - DEFESA E CONTRA-ATAQUE   |\n");
+        printf("\n| 2 - DEFESA BÁSICA            |\n");
+        printf("\n| 3 - BLOQUEAR ATAQUE          |\n");
+        printf("\n--------------------------------\n");
+        printf("\nDIGITE A OPÇÃO DE DEFESA: ");
+        scanf("%d", &protecao);
+
+        if (protecao < 1 || protecao > 3){
+            printf("\nOPÇÃO INVÁLIDA\n");
+            printf("\nTENTE NOVAMENTE\n");
+        }
+
+        else if (protecao == DEFESA_CONTRA){
+            dano_jogador = jogador[tipo_jogador - 1].vida - 20;
+            combate_monstro(jogador, tipo_jogador, &dano_jogador);
+            
+        }
+
+
+    }while(protecao < 1 || protecao > 3);
 }
 
 int combate_completo(struct Monstros mons[], struct Jogador jog[],int tipo_monstro, int tipo_jogador) {
@@ -131,7 +180,9 @@ int combate_completo(struct Monstros mons[], struct Jogador jog[],int tipo_monst
 
         if (dado_monstro > dado_jogador) {
 
-            combate_monstro(mons, jog, tipo_monstro, tipo_jogador);
+            tipos_defesa(mons, jog, tipo_monstro, tipo_jogador);
+
+            //combate_monstro(mons, jog, tipo_monstro, tipo_jogador);
 
             if (jog[tipo_jogador - 1].vida <= 0) {
             printf("\n----------------------------------\n");
